@@ -1,7 +1,6 @@
 import requests
-from bs4 import BeautifulSoup
 import re
-import random
+from datamysql import Mogodb_name
 import datamysql
 import time
 from lxml import etree
@@ -116,13 +115,11 @@ def list_moth_read(url,proxy,key_page,key,page,cookie,cookie_id):
                 if len(list)>5:
                     pages = s.xpath("//a[contains(@id,'sogou_page')]/text()")
                     if str(int(page)+1) in str(pages):
-                        datamysql.insert_name_to_mongodb(str(key) + '#' + str(int(page)+1))
+                        Mogodb_name().insert_name_to_mongodb(str(key) + '#' + str(int(page)+1))
                         print(key_page, '  有数据=', len(json_reads),len(list),'个号',pages)
                 else:
                     print(key_page, '结束，page不累加',len(list),'个号')
-
             isok = 1
-
     except:
         isok = 0
     return isok

@@ -5,9 +5,9 @@ import re
 import iplist
 import datetime
 import random
-import datamysql
 import sentemail
 import time
+from datamysql import Mogodb_name
 
 def get_keywords(key_page,i,iplsit,Cookies_list):
     lock = threading.Lock()
@@ -47,7 +47,7 @@ def get_keywords(key_page,i,iplsit,Cookies_list):
     isok = fix.list_moth_read(url, proxy,key_page[i],key,page,cookie,cookie_value['id'])
 
     if isok==1:
-        datamysql.up_name_to_mongodb(key_page[i])
+        Mogodb_name().up_name_to_mongodb(key_page[i])
         #q.put(key_page[i])#返回子线程的数据，down=1
 
 
@@ -73,7 +73,7 @@ def wx_keywords_proxy(key_page,concurrency,concurrency_max,iplsit,suids):
         k+=1
         if k>3:
             k=0
-            key_page = datamysql.get_name_to_mongodb()
+            key_page = Mogodb_name().get_name_to_mongodb()
         long = len(key_page)
         concurrency = int(long / 2)
         chongzhi+=1
@@ -96,12 +96,11 @@ def cc(concurrency_max):
     iplsit = iplist.get_iplist()
     suids = iplist.get_suid()
 
-    key_page = datamysql.get_name_to_mongodb()
+    key_page = Mogodb_name().get_name_to_mongodb()
     print(len(iplsit), '个代理   ', len(key_page), '个key', '\n', key_page)
     concurrency = 210
-    concurrency_max = 500
     wx_keywords_proxy(key_page, concurrency, concurrency_max, iplsit, suids)
 
 if __name__ == '__main__':
 
-    cc(500)
+    cc(2000)
