@@ -36,6 +36,7 @@ def search_key(key,page)    :
             if laji_check(wxname, wxhost) == 1:
                 bad_words = 1
             datamysql.inmysql_moth_read(fix_wxname(wxname), wxid, wxhost, month_count, avg_read, bad_words,fix_wxname(about),key_page, cookie_id)
+    except:pass
 def fix_wxname(wxname):
     p=re.compile('<.*?>|\'|\n|\r')
     s=p.sub('',wxname).replace('【','')
@@ -57,7 +58,7 @@ if __name__ == '__main__':
     inFile = open('keywords', 'r')
     keys0 = inFile.readlines()
     inFile.close()
-    for page in range(1,11):
+    for page in range(2,11):
         for key in keys0:
             print(key.strip(),page)
             search_key(key.strip(),page)
