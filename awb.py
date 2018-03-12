@@ -4,23 +4,31 @@ import datamysql
 import requests
 import json
 import re
-import time
+import random
 
 def search_key(key,page)    :
     headers = {'Accept': 'application/json, text/plain, */*', 'Accept-Encoding': 'gzip, deflate',
                'Accept-Language': 'zh-CN,zh;q=0.9', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive',
                'Content-Length': '189', 'Content-Type': 'application/json;charset=UTF-8',
-               'Cookie': 'Hm_lvt_45cdb9a58c4dd401ed07126f3c04d3c4=1519570358; awbYHQXTK=hWXM8jexf8P1LNW3PFuVLIEI3ADpVqxfoAnzpfaFhMPsbTYMbioZky0UwPjn8M40wI7U8R4oE8T+MDMJQjGzGQ==; Hm_lpvt_45cdb9a58c4dd401ed07126f3c04d3c4=1519571392',
+               'Cookie': 'Hm_lvt_45cdb9a58c4dd401ed07126f3c04d3c4=1519570358,1520612293; awbYHQXTK=hWXM8jexf8P1LNW3PFuVLFwCip+8YvRSyjKKZk/HbgDmZi4c3ci2ur67/YhLSovW8eEFl29fc3nMaZ06CPcApQ==; Hm_lpvt_45cdb9a58c4dd401ed07126f3c04d3c4=1520619629',
                'DNT': '1', 'Host': 'top.aiweibang.com', 'Origin': 'http://top.aiweibang.com', 'Pragma': 'no-cache',
                'Referer': 'http://top.aiweibang.com/user/search_advanced?kw=%E5%95%8A&kwtype=description&readmin=1000&readmax=100001&pageindex=9&pagesize=10',
                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.167 Safari/537.36',
                'X-Requested-With': 'XMLHttpRequest'}
     url='http://top.aiweibang.com/user/getsearch_advanced'
-    payload = {"kw":key,"kwtype":"description","provinceid":None,"cityId":None,"kindid":None,"kindclassid":None,"readmin":"1000","readmax":100001,"original":None,"video":None,"pageindex":page,"pagesize":10}
+    payload = {"kw":key,"kwtype":"name","provinceid":None,"cityId":None,"kindid":None,"kindclassid":None,"readmin":"500","readmax":"0","original":None,"video":None,"pageindex":page,"pagesize":10}
     r = requests.post(url,headers=headers,json=payload)
     try:
 
         wx_list = json.loads(r.text)['data']['data']
+
+        if int(page)==1:
+            page_max=int(json.loads(r.text)['data']['total']/10)+1
+            print('_____strat page++1,,,page_max=',page_max)
+
+            for p in range(2,page_max+1):
+                datamysql.up_search_key_to_mongodb('keywords', 'words', key+'#'+str(p),0)
+
         for i in wx_list:
             wxname = i['Name']
             wxid = i['Alias']
@@ -35,7 +43,7 @@ def search_key(key,page)    :
             bad_words = 0
             if laji_check(wxname, wxhost) == 1:
                 bad_words = 1
-            datamysql.inmysql_moth_read(fix_wxname(wxname), wxid, wxhost, month_count, avg_read, bad_words,fix_wxname(about),key_page, cookie_id)
+            datamysql.inmysql_moth_read(fix_wxname(wxname), fix_wxname(wxid), wxhost, month_count, avg_read, bad_words,fix_wxname(about),key_page, cookie_id)
     except:pass
 def fix_wxname(wxname):
     p=re.compile('<.*?>|\'|\n|\r')
@@ -55,11 +63,21 @@ def laji_check(wxname,zhuti):
     return laji
 
 if __name__ == '__main__':
-    inFile = open('keywords', 'r')
-    keys0 = inFile.readlines()
-    inFile.close()
-    for page in range(2,11):
-        for key in keys0:
-            print(key.strip(),page)
-            search_key(key.strip(),page)
-            time.sleep(2)
+    #keys=datamysql.get_search_key_to_mongodb('awb')
+    keys = datamysql.awb()
+    i=0
+    while len(keys)>0:
+        i+=1
+        key_page=random.choice(keys)
+        p = re.compile('(.*?)#(\d+)')
+        dd = p.findall(key_page)
+        key = dd[0][0]
+        page = dd[0][1]
+        try:
+            search_key(key, page)
+        except:pass
+        datamysql.up_search_key_to_mongodb('keywords','words',key_page,1)
+        '''if i>10:
+            i=0
+            keys = datamysql.get_search_key_to_mongodb('awb')
+'''
